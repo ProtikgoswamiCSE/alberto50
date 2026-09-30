@@ -37,6 +37,7 @@ class AppTheme {
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: bgDark,
+      splashFactory: InkRipple.splashFactory,
       focusColor: gold.withValues(alpha: 0.28),
       highlightColor: gold.withValues(alpha: 0.16),
       colorScheme: const ColorScheme.dark(

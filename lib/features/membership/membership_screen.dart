@@ -288,174 +288,233 @@ class _MembershipScreenState extends State<MembershipScreen> {
     final isCurrent = membership.currentLevel?.id == level.id;
     final isFree = level.isFree;
 
+    final amount = double.tryParse(level.billingAmount) ??
+        double.tryParse(level.initialPayment) ??
+        0;
+    final period = level.billingPeriod.trim();
+
     return ConstrainedBox(
       constraints: BoxConstraints(minHeight: _cardHeight),
       child: TvFocusableCard(
-      key: _keyFor(level.id),
-      scaleOnFocus: false,
-      onTap: isCurrent
-          ? null
-          : () => _openCheckout(context, level, auth.user?.id ?? 0),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(widget.isTV ? 14 : 12),
-        decoration: BoxDecoration(
-          gradient: isCurrent
-              ? LinearGradient(
-                  colors: [
-                    AppTheme.accent.withValues(alpha: 0.15),
-                    AppTheme.accent.withValues(alpha: 0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+        key: _keyFor(level.id),
+        scaleOnFocus: true,
+        focusScale: 1.02,
+        focusColor: isFree ? null : AppTheme.gold,
+        borderRadius: BorderRadius.circular(18),
+        onTap: isCurrent
+            ? null
+            : () => _openCheckout(context, level, auth.user?.id ?? 0),
+        child: Container(
+          width: double.infinity,
+          padding: EdgeInsets.fromLTRB(
+            widget.isTV ? 18 : 16,
+            widget.isTV ? 16 : 14,
+            widget.isTV ? 18 : 16,
+            widget.isTV ? 16 : 14,
+          ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isFree
+                  ? [AppTheme.bgCard, const Color(0xFF141414)]
+                  : const [
+                      Color(0xFF3A2C12),
+                      Color(0xFF1A160F),
+                      Color(0xFF101010),
+                    ],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isFree
+                              ? AppTheme.bgElevated
+                              : AppTheme.gold.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          isFree
+                              ? Icons.person_outline
+                              : Icons.workspace_premium_rounded,
+                          color: isFree ? AppTheme.textMuted : AppTheme.goldLight,
+                          size: 20,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (!isFree && !isCurrent)
+                        _pill('Recommended', AppTheme.gold),
+                      if (isCurrent) _pill('Current', AppTheme.accent),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    level.name,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontSize: widget.isTV ? 20 : 17,
+                          color: AppTheme.textPrimary,
+                          letterSpacing: 0.2,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  if (isFree)
+                    Text(
+                      'Free',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppTheme.textMuted,
+                            fontSize: widget.isTV ? 16 : 14,
+                          ),
+                    )
+                  else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          '\$${amount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: AppTheme.goldLight,
+                            fontSize: widget.isTV ? 28 : 24,
+                            fontWeight: FontWeight.w700,
+                            height: 1,
+                          ),
+                        ),
+                        if (period.isNotEmpty)
+                          Text(
+                            '  / $period',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: widget.isTV ? 14 : 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                      ],
+                    ),
+                  const SizedBox(height: 14),
+                  if (level.includes.isEmpty)
+                    Text(
+                      level.summary,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontSize: widget.isTV ? 13 : 12,
+                            height: 1.4,
+                          ),
+                    )
+                  else
+                    _includesList(context, level.includes, gold: !isFree),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (!isCurrent)
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ExcludeFocus(
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          _openCheckout(context, level, auth.user?.id ?? 0),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            isFree ? AppTheme.bgElevated : AppTheme.gold,
+                        foregroundColor:
+                            isFree ? AppTheme.textPrimary : const Color(0xFF1A1204),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        textStyle: TextStyle(
+                          fontSize: widget.isTV ? 15 : 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      child: Text(isFree ? 'Select Free' : 'Upgrade'),
+                    ),
+                  ),
                 )
-              : null,
-          color: isCurrent ? null : AppTheme.bgCard,
-          borderRadius: BorderRadius.circular(16),
+              else
+                const SizedBox(height: 46),
+            ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isFree
-                        ? AppTheme.bgElevated
-                        : AppTheme.gold.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    isFree ? Icons.person_outline : Icons.workspace_premium,
-                    color: isFree ? AppTheme.textMuted : AppTheme.gold,
-                    size: 18,
-                  ),
-                ),
-                if (isCurrent)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                          color: AppTheme.accent.withValues(alpha: 0.3)),
-                    ),
-                    child: Text('Current',
-                        style: TextStyle(
-                            color: AppTheme.accent,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600)),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              level.name,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontSize: widget.isTV ? 16 : 15,
-                    color: AppTheme.textPrimary,
-                  ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              level.priceLabel,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isFree ? AppTheme.textMuted : AppTheme.gold,
-                    fontWeight:
-                        isFree ? FontWeight.w400 : FontWeight.w600,
-                    fontSize: widget.isTV ? 15 : 14,
-                  ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 10),
-            if (level.includes.isEmpty)
-              Text(
-                level.summary,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontSize: widget.isTV ? 13 : 12,
-                    ),
-              )
-            else
-              _includesList(context, level.includes),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (!isCurrent)
-              SizedBox(
-                width: double.infinity,
-                height: 42,
-                child: ExcludeFocus(
-                  child: ElevatedButton(
-                    onPressed: () =>
-                        _openCheckout(context, level, auth.user?.id ?? 0),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isFree ? AppTheme.bgElevated : AppTheme.accent,
-                      minimumSize: Size.zero,
-                      textStyle: TextStyle(fontSize: widget.isTV ? 14 : 13),
-                    ),
-                    child: Text(isFree ? 'Select Free' : 'Upgrade →'),
-                  ),
-                ),
-              )
-            else
-              const SizedBox(height: 42),
-          ],
-        ),
-      ),
       ),
     );
   }
 
-  Widget _includesList(BuildContext context, List<String> points) {
-    const fontSize = 12.0;
+  Widget _pill(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+  }
+
+  Widget _includesList(
+    BuildContext context,
+    List<String> points, {
+    required bool gold,
+  }) {
+    final mark = gold ? AppTheme.goldLight : AppTheme.textMuted;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Your Membership Includes:',
+          'Your membership includes',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppTheme.textSecondary,
                 fontWeight: FontWeight.w600,
                 fontSize: widget.isTV ? 13 : 12,
+                letterSpacing: 0.2,
               ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 10),
         for (final point in points)
           Padding(
-            padding: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 1),
                   child: Icon(
-                    Icons.play_circle_fill,
-                    color: AppTheme.purpleLight,
-                    size: widget.isTV ? 16 : 14,
+                    Icons.check_circle_rounded,
+                    color: mark,
+                    size: widget.isTV ? 16 : 15,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     point,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.textSecondary,
-                          fontSize: fontSize,
-                          height: 1.35,
+                          color: const Color(0xFFE6E6E6),
+                          fontSize: widget.isTV ? 13 : 12,
+                          height: 1.4,
                         ),
                   ),
                 ),

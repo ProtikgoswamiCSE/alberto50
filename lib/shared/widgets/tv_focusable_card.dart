@@ -16,6 +16,8 @@ class TvFocusableCard extends StatefulWidget {
   final FocusNode? focusNode;
   final bool autofocus;
   final bool scaleOnFocus;
+  final double focusScale;
+  final Color? focusColor;
   final BorderRadius borderRadius;
 
   const TvFocusableCard({
@@ -25,6 +27,8 @@ class TvFocusableCard extends StatefulWidget {
     this.focusNode,
     this.autofocus = false,
     this.scaleOnFocus = true,
+    this.focusScale = 1.05,
+    this.focusColor,
     this.borderRadius = const BorderRadius.all(Radius.circular(16)),
   });
 
@@ -46,9 +50,12 @@ class _TvFocusableCardState extends State<TvFocusableCard>
     _focusNode = widget.focusNode ?? FocusNode();
     _scaleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 240),
+      duration: const Duration(milliseconds: 320),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleOnFocus ? 1.05 : 1.0).animate(
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: widget.scaleOnFocus ? widget.focusScale : 1.0,
+    ).animate(
       CurvedAnimation(parent: _scaleController, curve: Curves.easeOutCubic),
     );
   }
@@ -109,21 +116,24 @@ class _TvFocusableCardState extends State<TvFocusableCard>
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
+          duration: const Duration(milliseconds: 320),
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
             borderRadius: widget.borderRadius,
             boxShadow: _isFocused
                 ? [
                     BoxShadow(
-                      color: AppTheme.accent.withValues(alpha: 0.6),
-                      blurRadius: 20,
-                      spreadRadius: 2,
+                      color: (widget.focusColor ?? AppTheme.accent)
+                          .withValues(alpha: 0.45),
+                      blurRadius: 24,
+                      spreadRadius: 1,
                     ),
                   ]
                 : [],
             border: Border.all(
-              color: _isFocused ? AppTheme.accent : AppTheme.divider,
+              color: _isFocused
+                  ? (widget.focusColor ?? AppTheme.accent)
+                  : AppTheme.divider,
               width: 2,
             ),
           ),

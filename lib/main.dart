@@ -78,16 +78,7 @@ class Alberto50App extends StatelessWidget {
       navigatorKey: tvNavigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      scrollBehavior: const MaterialScrollBehavior().copyWith(
-        dragDevices: {
-          PointerDeviceKind.touch,
-          PointerDeviceKind.mouse,
-          PointerDeviceKind.stylus,
-          PointerDeviceKind.trackpad,
-          // Xiaomi / Mi TV air-mouse often reports an unknown pointer.
-          PointerDeviceKind.unknown,
-        },
-      ),
+      scrollBehavior: const _TvScrollBehavior(),
       builder: (context, child) {
         return TvRemoteBinder(
           child: TvRemoteShortcuts(child: child ?? const SizedBox.shrink()),
@@ -216,5 +207,33 @@ class _SplashScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Android's stretch overscroll loads a shader that crashes this build.
+class _TvScrollBehavior extends MaterialScrollBehavior {
+  const _TvScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => const {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.unknown,
+      };
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const ClampingScrollPhysics();
+  }
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    return child;
   }
 }
